@@ -1,65 +1,188 @@
-import Image from "next/image";
+"use client";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+
+type TTask = {
+  id: string;
+  text: string;
+  priority: 0 | 1 | 2 | 3;
+  completed: boolean;
+};
+
+const priorityMap = {
+  0: { copy: "Urgent", styles: "border-rose-500" },
+  1: { copy: "Important", styles: "border-orange-500" },
+  2: { copy: "Next week", styles: "border-green-500" },
+  3: { copy: "Not important", styles: "border-indigo-500" },
+};
+
+type TTaskElement = TTask & {
+  onCheck: (id: string) => void;
+  onRemove: (id: string) => void;
+};
+
+const TaskElement = ({
+  text,
+  priority,
+  completed,
+  id,
+  onCheck,
+  onRemove,
+}: TTaskElement) => (
+  <li
+    className={`flex h-10 bg-zinc-900 text-zinc-200 justify-between items-center p-2 ${priorityMap[priority].styles} border rounded-lg`}
+  >
+    <div className={`flex items-center ${completed ? "line-through":"" }`}>
+      <input
+        className="mx-2"
+        type="checkbox"
+        checked={completed}
+        onChange={() => {
+          onCheck(id);
+        }}
+      />
+      {text}
+    </div>
+    <button
+      className="cursor-pointer hover:opacity-70"
+      onClick={() => {
+        onRemove(id);
+      }}
+    >
+      ❌
+    </button>
+  </li>
+);
+
+const createId = () => {
+  return (Math.random() + 1).toString(36).substring(2, 10);
+};
 
 export default function Home() {
+  const defaultTask: TTask = {
+    text: "",
+    id: "",
+    priority: 3,
+    completed: false,
+  };
+  const [task, setTask] = useState<TTask>(defaultTask);
+  const [tasks, setTasks] = useState<TTask[]>([]);
+
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setTask((prevTask) => ({
+      ...prevTask,
+      [name]: name === "priority" ? Number(value) : value,
+    }));
+  };
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const id = createId();
+    setTasks((prevTasks) => [...prevTasks, { ...task, id }]);
+    setTask(defaultTask);
+  };
+
+  const handleCheck = (id: string) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) => {
+        return task.id === id ? { ...task, completed: !task.completed } : task;
+      })
+    );
+  };
+
+  const handleRemove = (id: string) => {
+    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+  };
+
+  useEffect(() => {
+    const storedTasks = localStorage.getItem("tasks");
+    if (storedTasks) {
+      setTasks(JSON.parse(storedTasks));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }, [tasks]);
+
+  const taskCount = tasks.filter((t=>!t.completed)).length;
+  const sortedTasks = [...tasks].sort((a,b)=> a.priority - b.priority)
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="flex h-screen w-screen md:h-[70vh] md:w-[60vw] flex-col items-center justify-center p-5 bg-zinc-900 shadow shadow-rose-500/10 rounded-lg">
+      <form
+        className="bg-zinc-800 flex h-18 w-full md:w-1/2 text-black rounded-sm items-center justify-between p-3 gap-2"
+        onSubmit={handleSubmit}
+      >
+        <input
+          required
+          className="w-full h-10 bg-zinc-50 p-2 rounded-sm text-zinc-800"
+          type="text"
+          value={task.text}
+          onChange={handleChange}
+          name="text"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+        <select
+          name="priority"
+          onChange={handleChange}
+          value={task.priority}
+          className="p-2 text-zinc-200"
+        >
+          {Object.entries(priorityMap).map(([key, value]) => (
+            <option key={key} value={Number(key)}>
+              {value.copy}
+            </option>
+          ))}
+        </select>
+        <button
+          type="submit"
+          className="bg-rose-800 rounded-lg px-5 py-2 text-zinc-100 hover:opacity-70 cursor-pointer"
+        >
+          Add
+        </button>
+      </form>
+      <div className="grid grid-cols-1 md:grid-cols-2 w-full gap-2 p-2">
+        <div className="h-[50vh] overflow-scroll">
+          <h1 className="text-zinc-200 text-xl p-3 mx-auto w-full text-center my-2 uppercase">
+            Pending
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+          <ul className="flex flex-col gap-2 overflow-scroll px-5">
+            {sortedTasks
+              .filter((item) => !item.completed)
+              .map((it) => (
+                <TaskElement
+                  key={it.id}
+                  {...it}
+                  onCheck={handleCheck}
+                  onRemove={handleRemove}
+                />
+              ))}
+          </ul>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div>
+          <h1 className="text-zinc-200 text-xl p-3 mx-auto w-full text-center my-2 uppercase">
+            Completed
+          </h1>
+          <ul className="flex flex-col gap-2 overflow-scroll px-5">
+            {sortedTasks
+              .filter((item) => item.completed)
+              .map((it) => (
+                <TaskElement
+                  key={it.id}
+                  {...it}
+                  onCheck={handleCheck}
+                  onRemove={handleRemove}
+                />
+              ))}
+          </ul>
         </div>
-      </main>
-    </div>
+      </div>
+
+      <p className="text-zinc-200">
+        You have {taskCount} pending tasks
+      </p>
+    </main>
   );
 }
