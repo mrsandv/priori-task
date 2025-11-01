@@ -144,11 +144,11 @@ export default function Home() {
         </button>
       </form>
       <div className="grid grid-cols-1 md:grid-cols-2 w-full gap-2 p-2">
-        <div className="h-[50vh] overflow-scroll">
+        <div className="h-[50vh] overflow-scroll md:overflow-auto">
           <h1 className="text-zinc-200 text-xl p-3 mx-auto w-full text-center my-2 uppercase">
             Pending
           </h1>
-          <ul className="flex flex-col gap-2 overflow-scroll px-5">
+          <ul className="flex flex-col gap-2 overflow-scroll md:overflow-auto px-5">
             {sortedTasks
               .filter((item) => !item.completed)
               .map((it) => (
@@ -165,7 +165,7 @@ export default function Home() {
           <h1 className="text-zinc-200 text-xl p-3 mx-auto w-full text-center my-2 uppercase">
             Completed
           </h1>
-          <ul className="flex flex-col gap-2 overflow-scroll px-5">
+          <ul className="flex flex-col gap-2 overflow-scroll md:overflow-auto px-5">
             {sortedTasks
               .filter((item) => item.completed)
               .map((it) => (
