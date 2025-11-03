@@ -8,6 +8,11 @@ type TTask = {
   completed: boolean;
 };
 
+type TTaskElement = TTask & {
+  onCheck: (id: string) => void;
+  onRemove: (id: string) => void;
+};
+
 const priorityMap = {
   0: { copy: "Urgent", styles: "border-rose-500" },
   1: { copy: "Important", styles: "border-orange-500" },
@@ -15,12 +20,7 @@ const priorityMap = {
   3: { copy: "Not important", styles: "border-indigo-500" },
 };
 
-type TTaskElement = TTask & {
-  onCheck: (id: string) => void;
-  onRemove: (id: string) => void;
-};
-
-const TaskElement = ({
+const TaskItem = ({
   text,
   priority,
   completed,
@@ -57,7 +57,7 @@ const createId = () => {
   return (Math.random() + 1).toString(36).substring(2, 10);
 };
 
-export default function Home() {
+export default function PrioriTaskPage() {
   const defaultTask: TTask = {
     text: "",
     id: "",
@@ -152,7 +152,7 @@ export default function Home() {
             {sortedTasks
               .filter((item) => !item.completed)
               .map((it) => (
-                <TaskElement
+                <TaskItem
                   key={it.id}
                   {...it}
                   onCheck={handleCheck}
@@ -169,7 +169,7 @@ export default function Home() {
             {sortedTasks
               .filter((item) => item.completed)
               .map((it) => (
-                <TaskElement
+                <TaskItem
                   key={it.id}
                   {...it}
                   onCheck={handleCheck}
@@ -179,7 +179,6 @@ export default function Home() {
           </ul>
         </div>
       </div>
-
       <p className="text-zinc-200">
         You have {taskCount} pending tasks
       </p>
